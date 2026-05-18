@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>MNFLIX — Кино нэмэх</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#07090f;--surface:#0d1018;--card:#111520;--border:#1c2236;
+  --accent:#e8b84a;--accent2:#4a9fe8;--red:#e84a4a;
+  --text:#edf0fa;--muted:#68748f;--sub:#f5e642;
+  --radius:6px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;}
+nav{display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:60px;background:var(--surface);border-bottom:1px solid var(--border);}
+.logo{font-family:'Bebas Neue',sans-serif;font-size:1.9rem;letter-spacing:4px;background:linear-gradient(135deg,var(--accent) 0%,#fff 55%,var(--accent2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-decoration:none;}
+.nav-back{color:var(--muted);text-decoration:none;font-weight:600;font-size:.9rem;letter-spacing:1px;display:flex;align-items:center;gap:6px;transition:color .2s;}
+.nav-back:hover{color:var(--accent);}
+
+.page{max-width:960px;margin:0 auto;padding:40px 24px 80px;}
+.page-title{font-family:'Bebas Neue',sans-serif;font-size:2rem;letter-spacing:2px;margin-bottom:4px;}
+.page-sub{color:var(--muted);font-size:.9rem;margin-bottom:36px;}
+
+/* UPLOAD FORM */
+.upload-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:32px;margin-bottom:40px;}
+.upload-title{font-family:'Bebas Neue',sans-serif;font-size:1.35rem;letter-spacing:2px;margin-bottom:24px;display:flex;align-items:center;gap:10px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.form-full{grid-column:1/-1;}
+.form-group{display:flex;flex-direction:column;gap:6px;}
+label{font-size:.83rem;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;}
+input[type=text],input[type=number],textarea,select{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  color:var(--text);font-family:'Rajdhani',sans-serif;font-size:.95rem;
+  padding:10px 14px;outline:none;transition:border-color .2s;width:100%;
+}
+input:focus,textarea:focus,select:focus{border-color:var(--accent2);}
+textarea{resize:vertical;min-height:80px;}
+select option{background:var(--card);}
+
+/* FILE DROP ZONES */
+.drop-zone{
+  background:var(--surface);border:2px dashed var(--border);border-radius:var(--radius);
+  padding:32px 20px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;
+  position:relative;
+}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--accent);background:rgba(232,184,74,.04);}
+.drop-zone.has-file{border-color:var(--accent2);background:rgba(74,159,232,.04);}
+.drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.drop-icon{font-size:2rem;margin-bottom:8px;opacity:.5;}
+.drop-label{font-size:.9rem;font-weight:600;color:var(--muted);}
+.drop-label b{color:var(--accent);}
+.drop-hint{font-size:.75rem;color:var(--muted);margin-top:4px;opacity:.7;}
+.file-chosen{color:var(--accent2);font-weight:700;font-size:.88rem;margin-top:6px;}
+
+/* PROGRESS */
+.upload-progress{display:none;margin-top:20px;}
+.progress-bar{background:var(--surface);border-radius:4px;height:6px;overflow:hidden;margin-bottom:8px;}
+.progress-fill{height:100%;background:var(--accent);border-radius:4px;width:0%;transition:width .2s;}
+.progress-text{font-size:.82rem;color:var(--muted);font-weight:600;}
+
+/* SUBMIT */
+.btn-submit{
+  background:var(--accent);color:#000;border:none;
+  padding:14px 32px;border-radius:var(--radius);
+  font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;
+  cursor:pointer;letter-spacing:1px;margin-top:24px;
+  transition:opacity .2s,transform .15s;display:flex;align-items:center;gap:8px;
+}
+.btn-submit:hover{opacity:.88;transform:scale(1.02);}
+.btn-submit:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;right:28px;padding:12px 22px;border-radius:var(--radius);font-weight:700;font-size:.9rem;letter-spacing:.5px;z-index:999;animation:toastIn .2s ease;display:none;}
+.toast.success{background:#1a4a2a;border:1px solid #2a7a4a;color:#4aec8a;}
+.toast.error{background:#4a1a1a;border:1px solid #7a2a2a;color:#ec4a4a;}
+@keyframes toastIn{from{transform:translateY(14px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+
+/* MOVIE LIST */
+.movies-title{font-family:'Bebas Neue',sans-serif;font-size:1.35rem;letter-spacing:2px;margin-bottom:20px;}
+.movie-list{display:flex;flex-direction:column;gap:12px;}
+.movie-item{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;display:flex;align-items:center;gap:16px;transition:border-color .2s;}
+.movie-item:hover{border-color:var(--border);}
+.movie-thumb{width:52px;height:76px;object-fit:cover;border-radius:4px;background:var(--surface);flex-shrink:0;}
+.movie-thumb-ph{width:52px;height:76px;background:var(--surface);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;}
+.movie-info{flex:1;min-width:0;}
+.movie-name{font-weight:700;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.movie-meta{font-size:.78rem;color:var(--muted);margin-top:3px;display:flex;gap:10px;flex-wrap:wrap;}
+.movie-badges{display:flex;gap:6px;margin-top:6px;}
+.badge{display:inline-block;padding:2px 8px;border-radius:2px;font-size:.68rem;font-weight:800;letter-spacing:.5px;}
+.badge.sub{background:rgba(245,230,66,.12);color:var(--sub);border:1px solid rgba(245,230,66,.2);}
+.badge.vid{background:rgba(74,159,232,.1);color:var(--accent2);border:1px solid rgba(74,159,232,.2);}
+.delete-btn{background:rgba(232,74,74,.1);border:1px solid rgba(232,74,74,.2);color:var(--red);padding:6px 14px;border-radius:4px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:.8rem;cursor:pointer;letter-spacing:.5px;transition:background .2s;flex-shrink:0;}
+.delete-btn:hover{background:rgba(232,74,74,.2);}
+.empty-admin{text-align:center;padding:40px;color:var(--muted);font-size:.95rem;}
+
+@media(max-width:640px){
+  nav{padding:0 16px;}
+  .page{padding:24px 16px 60px;}
+  .form-grid{grid-template-columns:1fr;}
+  .form-full{grid-column:1;}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">MNFLIX</a>
+  <a href="/" class="nav-back">← Сайт руу буцах</a>
+</nav>
+
+<div class="page">
+  <div class="page-title">🎬 Кино нэмэх</div>
+  <div class="page-sub">Видео файл болон .srt/.vtt хадмал орчуулга upload хийнэ үү</div>
+
+  <div class="upload-card">
+    <div class="upload-title">📁 Шинэ кино</div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Киноны нэр *</label>
+        <input type="text" id="fTitle" placeholder="Жнэ: Interstellar"/>
+      </div>
+      <div class="form-group">
+        <label>Он</label>
+        <input type="text" id="fYear" placeholder="2024" maxlength="4"/>
+      </div>
+      <div class="form-group">
+        <label>Төрөл</label>
+        <select id="fGenre">
+          <option>Экшн</option><option>Драма</option><option>Инээдэм</option>
+          <option>Sci-Fi</option><option>Аймшиг</option><option>Романтик</option>
+          <option>Аниме</option><option>Баримтат</option><option>Триллер</option>
+          <option>Монгол кино</option><option>Бусад</option>
+        </select>
+      </div>
+      <div class="form-group form-full">
+        <label>Товч тайлбар</label>
+        <textarea id="fDesc" placeholder="Киноны тухай товч тайлбар..."></textarea>
+      </div>
+
+      <!-- VIDEO FILE -->
+      <div class="form-group form-full">
+        <label>Видео файл * (.mp4, .mkv, .webm)</label>
+        <div class="drop-zone" id="videoDrop">
+          <input type="file" id="fVideo" accept="video/*" onchange="onFileChange('video',this)"/>
+          <div class="drop-icon">🎥</div>
+          <div class="drop-label">Видео файлаа <b>сонгох</b> эсвэл чирж тавих</div>
+          <div class="drop-hint">MP4, MKV, WEBM — дурын хэмжээ</div>
+          <div class="file-chosen" id="videoChosen"></div>
+        </div>
+      </div>
+
+      <!-- SUBTITLE FILE -->
+      <div class="form-group form-full">
+        <label>Монгол хадмал (заавал биш) — .srt эсвэл .vtt</label>
+        <div class="drop-zone" id="subDrop">
+          <input type="file" id="fSub" accept=".srt,.vtt" onchange="onFileChange('sub',this)"/>
+          <div class="drop-icon">💬</div>
+          <div class="drop-label">Хадмал файлаа <b>сонгох</b> эсвэл чирж тавих</div>
+          <div class="drop-hint">.SRT эсвэл .VTT формат — автоматаар хөрвүүлэгдэнэ</div>
+          <div class="file-chosen" id="subChosen"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="upload-progress" id="uploadProg">
+      <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
+      <div class="progress-text" id="progText">Байршуулж байна...</div>
+    </div>
+
+    <button class="btn-submit" id="submitBtn" onclick="uploadMovie()">
+      ⬆ Кино байршуулах
+    </button>
+  </div>
+
+  <!-- MOVIE LIST -->
+  <div class="movies-title">Байршсан кинонууд</div>
+  <div class="movie-list" id="adminMovieList">
+    <div class="empty-admin">Кино байхгүй байна</div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+function onFileChange(type, input) {
+  const f = input.files[0];
+  if (!f) return;
+  const id = type === 'video' ? 'videoChosen' : 'subChosen';
+  const dropId = type === 'video' ? 'videoDrop' : 'subDrop';
+  document.getElementById(id).textContent = `✓ ${f.name} (${formatSize(f.size)})`;
+  document.getElementById(dropId).classList.add('has-file');
+}
+
+function formatSize(bytes) {
+  if (bytes > 1024*1024*1024) return (bytes/1024/1024/1024).toFixed(1)+' GB';
+  if (bytes > 1024*1024) return (bytes/1024/1024).toFixed(1)+' MB';
+  return (bytes/1024).toFixed(0)+' KB';
+}
+
+function showToast(msg, type='success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast ${type}`;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 3500);
+}
+
+async function uploadMovie() {
+  const title = document.getElementById('fTitle').value.trim();
+  const videoFile = document.getElementById('fVideo').files[0];
+
+  if (!title) { showToast('Киноны нэр оруулна уу!', 'error'); return; }
+  if (!videoFile) { showToast('Видео файл сонгоно уу!', 'error'); return; }
+
+  const fd = new FormData();
+  fd.append('title', title);
+  fd.append('year', document.getElementById('fYear').value || new Date().getFullYear());
+  fd.append('genre', document.getElementById('fGenre').value);
+  fd.append('description', document.getElementById('fDesc').value);
+  fd.append('video', videoFile);
+
+  const subFile = document.getElementById('fSub').files[0];
+  if (subFile) fd.append('subtitle', subFile);
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Байршуулж байна...';
+
+  const prog = document.getElementById('uploadProg');
+  const fill = document.getElementById('progFill');
+  const progText = document.getElementById('progText');
+  prog.style.display = 'block';
+
+  // XHR for progress
+  const xhr = new XMLHttpRequest();
+  xhr.open('POST', '/api/upload');
+
+  xhr.upload.onprogress = (e) => {
+    if (e.lengthComputable) {
+      const pct = Math.round(e.loaded / e.total * 100);
+      fill.style.width = pct + '%';
+      progText.textContent = `Байршуулж байна... ${pct}% (${formatSize(e.loaded)} / ${formatSize(e.total)})`;
+    }
+  };
+
+  xhr.onload = () => {
+    btn.disabled = false;
+    btn.textContent = '⬆ Кино байршуулах';
+    prog.style.display = 'none';
+    fill.style.width = '0%';
+
+    try {
+      const data = JSON.parse(xhr.responseText);
+      if (data.success) {
+        showToast(`✓ "${data.movie.title}" амжилттай нэмэгдлээ!`);
+        // Reset form
+        document.getElementById('fTitle').value = '';
+        document.getElementById('fYear').value = '';
+        document.getElementById('fDesc').value = '';
+        document.getElementById('fVideo').value = '';
+        document.getElementById('fSub').value = '';
+        document.getElementById('videoChosen').textContent = '';
+        document.getElementById('subChosen').textContent = '';
+        document.getElementById('videoDrop').classList.remove('has-file');
+        document.getElementById('subDrop').classList.remove('has-file');
+        loadAdminMovies();
+      } else {
+        showToast(data.error || 'Алдаа гарлаа', 'error');
+      }
+    } catch(e) {
+      showToast('Серверийн алдаа', 'error');
+    }
+  };
+
+  xhr.onerror = () => {
+    btn.disabled = false;
+    btn.textContent = '⬆ Кино байршуулах';
+    prog.style.display = 'none';
+    showToast('Холболтын алдаа', 'error');
+  };
+
+  xhr.send(fd);
+}
+
+async function deleteMovie(id, title) {
+  if (!confirm(`"${title}" киног устгах уу?`)) return;
+  await fetch(`/api/movies/${id}`, { method: 'DELETE' });
+  showToast(`"${title}" устгагдлаа`);
+  loadAdminMovies();
+}
+
+async function loadAdminMovies() {
+  const res = await fetch('/api/movies');
+  const movies = await res.json();
+  const list = document.getElementById('adminMovieList');
+
+  if (movies.length === 0) {
+    list.innerHTML = '<div class="empty-admin">Кино байхгүй байна</div>';
+    return;
+  }
+
+  list.innerHTML = movies.map(m => `
+    <div class="movie-item">
+      ${m.thumbnail
+        ? `<img class="movie-thumb" src="/uploads/thumbnails/${m.thumbnail}" alt="${esc(m.title)}"/>`
+        : `<div class="movie-thumb-ph">🎬</div>`}
+      <div class="movie-info">
+        <div class="movie-name">${esc(m.title)}</div>
+        <div class="movie-meta">
+          <span>${esc(m.year)}</span>
+          <span>${esc(m.genre)}</span>
+          <span>${new Date(m.uploadedAt).toLocaleDateString('mn-MN')}</span>
+        </div>
+        <div class="movie-badges">
+          <span class="badge vid">🎥 ${esc(m.videoFile.split('.').pop().toUpperCase())}</span>
+          ${m.subFile ? '<span class="badge sub">💬 SUB MN</span>' : ''}
+        </div>
+      </div>
+      <button class="delete-btn" onclick="deleteMovie('${m.id}','${esc(m.title)}')">🗑 Устгах</button>
+    </div>
+  `).join('');
+}
+
+function esc(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Drag and drop
+['videoDrop','subDrop'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('dragover', e => { e.preventDefault(); el.classList.add('drag'); });
+  el.addEventListener('dragleave', () => el.classList.remove('drag'));
+  el.addEventListener('drop', e => {
+    e.preventDefault();
+    el.classList.remove('drag');
+    const input = el.querySelector('input[type=file]');
+    input.files = e.dataTransfer.files;
+    input.dispatchEvent(new Event('change'));
+  });
+});
+
+loadAdminMovies();
+</script>
+</body>
+</html>
